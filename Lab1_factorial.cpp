@@ -41,6 +41,9 @@ int main(){
         int res = factorial(int(getIn));
         cout<<"="<<res<<endl;
     }catch(runtime_error& e){
+        getchar();
+        cin.sync();
+        cin.clear();
         cerr<<e.what()<<endl;
     }}
     return 0;
