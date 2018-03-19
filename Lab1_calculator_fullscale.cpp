@@ -24,7 +24,7 @@ public:                         //
         :kind(ch), value(0){}   //
     Token(char ch, double val)  //
         :kind(ch),value(val){}  //
-};                              //
+};Token ans('A',0);             //
 /*=============finish===========*/
 
 /*****************Construction of Token_stream **************************/
@@ -76,18 +76,28 @@ Token Token_stream::get()                                               //
                 return Token('D',val);                                  //
             }
         case'A':{
-                return Token('A',0);
-            }                                                                       //
-        default:                                                        //
+                char a1; char a2;
+                cin>>a1>>a2;
+                if(a1 == 'N'&& a2 == 'S')return ans;
+                else{
+                    while(getchar() != ';' ){        
+                        cin.sync();
+                        cin.clear();
+                    } /*added*/
+                    error("Bad token");
+                }
+            }                                                           //
+        default: 
+            while(getchar() != ';' ){        
+                    cin.sync();
+                    cin.clear();}                                       //
             error("Bad token");                                         //
     }                                                                   //
-}                                                                       //
+};Token_stream ts;                                                                     //
 /*==================finsish=============================================*/
 
 /*--------grammar_functions---------*/
-Token_stream ts; 
-Token ans('A',0);  
-                       //
+                   //
 double expression();                //
 double term();                      //
 double primary();                   //
