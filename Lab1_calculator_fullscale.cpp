@@ -1,5 +1,4 @@
-/*lab1_calculator_0.2_wxm*
-factorial and sign added； priority fixed/
+/*lab1_calculator_0.1_wxm*/
 #include <stdio.h>       //
 #include<iostream>       //
 #include<cmath>          //
@@ -47,7 +46,7 @@ Token_stream::Token_stream()                                            //
 /*method----putback----------------------------------*/                 //
 void Token_stream::putback(Token t)                                     //
 {                                                                       //
-    if(full){error("putback() into a full buffer.");}                   //
+    //if(full){error("putback() into a full buffer.");}                   //
     buffer = t;                                                         //
     full = true;                                                        //
 } 
@@ -66,9 +65,9 @@ Token Token_stream::get()                                               //
         case'q':                                                        //
         case'(':case')':                                                //
         case'+':case'-':                                                //
-        case'*':case'/': case'!':                                               //
+        case'*':case'/':case'%':case'!':                                               //
             return Token(ch);                                            //
-        case'.':                                                        //
+        case'.':                                                       //
         case'0':case'1':case'2':case'3':case'4':                        //
         case'5':case'6':case'7':case'8':case'9':                        //
             {                                                           //
@@ -82,29 +81,23 @@ Token Token_stream::get()                                               //
                 cin>>a1>>a2;
                 if(a1 == 'N'&& a2 == 'S')return ans;
                 else{
-                    while(getchar() != ';' ){        
-                        cin.sync();
-                        cin.clear();
-                    } /*added*/
                     error("Bad token");
+                    break;
                 }
             }                                                                       //
-        default:                                                        //
-            while(getchar() != ';' ){        
-                    cin.sync();
-                    cin.clear();}   /*added*/      
+        default:                                                        //    
             error("Bad token");                                 //
     }                                                                   //
 }                                                                       //
 /*==================finsish=============================================*/
-/*=====================================*/
+
 int factorial(double n){
         int n_ = int(n); 
         if(n_ == n){
             if(n_ == 0){
                 return 1;
             }else if(n < 0){
-                error("negative fct err");
+                error("negative step err");
             }else{
                 int res = 1;
                 for(int i = 1; i <= n_; i++){
@@ -113,7 +106,9 @@ int factorial(double n){
                 return res;
             }
         }
-        else error("float fct err");
+        else{
+            error("float step err");
+            }
 }
 /*--------grammar_functions---------*/
 Token_stream ts; 
@@ -144,17 +139,35 @@ double expression(){                //
 /*----------------------------------*/
 double term(){                      //
     double left = primary();        //
-    Token t = ts.get();             //
+    Token t = ts.get(); 
+    double right;            //
     while(true){                    //
         switch(t.kind){             //
-            case'*':                //
-                left *= term();     //
+            case'*':    
+                right = term();            //
+                left *= right;     //
                 t = ts.get();       //
                 break;              //
-            case'/':                //
-                left /= term();     //
-                t = ts.get();       //
-                break;              //
+            case'/':  
+                right = term(); 
+                if(right != 0){      //
+                    left /= right;     //
+                    t = ts.get();       //
+                    break;
+                }else{
+                    t = ts.get();
+                    throw('N');
+                }
+            case'%': 
+                    right = term();
+                    if(right != 0 && right == int(right)){
+                        left = int(left) % int(right);
+                        t = ts.get();       //
+                        break;  
+                    }else{
+                        t = ts.get();
+                        throw('N');
+                    }  //
             default:                //
                 ts.putback(t);      //
                 return left;        //
@@ -165,13 +178,15 @@ double term(){                      //
 double primary(){                                            //
     Token t = ts.get(); 
     double result;                                      //
-    switch(t.kind){                                         //
+    switch(t.kind){                                     //
         case'(':                                             //
             {                                                //
                 double d = expression();                     //
                 t = ts.get();                                //
-                if(t.kind != ')'){error("')'expected");}     //
-                result = d; break;                                    //
+                if(t.kind != ')'){
+                    throw(')');
+                }     //
+                else result = d; break;                                    //
             }                                                //
         case'D':                                             //
             result = t.value; break;
@@ -187,8 +202,9 @@ double primary(){                                            //
                 double d = primary();//good way to deal ++-- and -5!
                 result = -d; break;
             }                          //
-        default:                                             //
-            error("primary expected");                       //
+        default:    
+            t = ts.get();                                         //
+            error("primary needed");                       //
     } 
     t = ts.get();
     if(t.kind == '!') return factorial(result);  
@@ -199,28 +215,35 @@ double primary(){                                            //
 int main(){/*added*/
     double val = 0;
     bool flag = true;
-    while(true){
-                /*swift*/
-    try{
-            if(flag)cout<<">";
-            Token t = ts.get();
-            if(t.kind == 'q')break;
-            if(t.kind == ';'){
-                flag = true;/*added*/
-                cout<<'='<<val<<endl;
-                ans.value = val;/*added*/
-            }else{
-                flag = false;/*added*/
-                ts.putback(t);
-                val = expression();
+    while(true){//表达式一定要以(英文全角)分号结尾，否则无法打印结果，或报错后无法开始新一轮循环
+        try{
+                if(flag)cout<<"> ";
+                Token t = ts.get();
+                if(t.kind == 'q')break;
+                if(t.kind == ';'){//正确表达式读不到分号无法打印
+                    cout<<'='<<' '<<val<<endl;
+                    flag = true;/*added*/
+                    ans.value = val;/*added*/
+                }else{
+                    flag = false;/*added*/
+                    ts.putback(t);
+                    val = expression();
+                }
             }
+        catch(runtime_error& e){
+            flag = true;
+            cerr<<e.what()<<endl;//catch的报错是即时的
+            while(getchar() != ';' ){//但读不到分号无法退出循环，所以也需要分号       
+                cin.sync();//一旦有error，cin清空，避免多行重复报错（表达式中有多个bad token的情况 比如 3+A+f+$;）
+                cin.clear();}
         }
-    catch(runtime_error& e){
-        cerr<<e.what()<<endl;
-    }
-    catch(...){
-        cerr<<"unknow error"<<endl;
-    }
+        catch(char& e){
+            flag = true;
+            cerr<<e<<"needed"<<endl;
+        }catch(...){
+            flag = true;
+            cerr<<"unknow error"<<endl;
+        }
     }
     return 0;
 }
