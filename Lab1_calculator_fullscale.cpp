@@ -163,28 +163,29 @@ double primary(){                                            //
 /*=============finish========================================*/
 
 int main(){
+    bool flag = true;/*added*/
+    double val = 0;
+    while(true){/*swift*/
     try{
-        Token ans('A',0);
-        bool flag = true;
-        double val = 0;
-        while(true){
             if(flag)cout<<">";
             Token t = ts.get();
             if(t.kind == 'q')break;
             if(t.kind == ';'){
-                flag = true;
+                flag = true;/*added*/
                 cout<<'='<<val<<endl;
-                ans.value = val;
+                ans.value = val;/*added*/
             }else{
-                flag = false;
+                flag = false;/*added*/
                 ts.putback(t);
                 val = expression();
             }
         }
-    }catch(runtime_error& e){
+    catch(runtime_error& e){
         cerr<<e.what()<<endl;
     }
     catch(...){
         cerr<<"unknow error"<<endl;
     }
+    }
+    return 0;
 }
