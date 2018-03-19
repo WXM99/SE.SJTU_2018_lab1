@@ -1,4 +1,5 @@
-/*lab1_calculator_0.1_wxm*/
+/*lab1_calculator_0.2_wxm*
+factorial and sign added； priority fixed/
 #include <stdio.h>       //
 #include<iostream>       //
 #include<cmath>          //
@@ -24,7 +25,8 @@ public:                         //
         :kind(ch), value(0){}   //
     Token(char ch, double val)  //
         :kind(ch),value(val){}  //
-};Token ans('A',0);             //
+};   
+Token ans('A',0);/*added*/               //
 /*=============finish===========*/
 
 /*****************Construction of Token_stream **************************/
@@ -64,7 +66,7 @@ Token Token_stream::get()                                               //
         case'q':                                                        //
         case'(':case')':                                                //
         case'+':case'-':                                                //
-        case'*':case'/':                                                //
+        case'*':case'/': case'!':                                               //
             return Token(ch);                                            //
         case'.':                                                        //
         case'0':case'1':case'2':case'3':case'4':                        //
@@ -75,7 +77,7 @@ Token Token_stream::get()                                               //
                 cin>>val;//cin can read the number including 'ch'       //
                 return Token('D',val);                                  //
             }
-        case'A':{
+        case'A':{/*added*/
                 char a1; char a2;
                 cin>>a1>>a2;
                 if(a1 == 'N'&& a2 == 'S')return ans;
@@ -86,18 +88,36 @@ Token Token_stream::get()                                               //
                     } /*added*/
                     error("Bad token");
                 }
-            }                                                           //
-        default: 
+            }                                                                       //
+        default:                                                        //
             while(getchar() != ';' ){        
                     cin.sync();
-                    cin.clear();}                                       //
-            error("Bad token");                                         //
+                    cin.clear();}   /*added*/      
+            error("Bad token");                                 //
     }                                                                   //
-};Token_stream ts;                                                                     //
+}                                                                       //
 /*==================finsish=============================================*/
-
+/*=====================================*/
+int factorial(double n){
+        int n_ = int(n); 
+        if(n_ == n){
+            if(n_ == 0){
+                return 1;
+            }else if(n < 0){
+                error("negative fct err");
+            }else{
+                int res = 1;
+                for(int i = 1; i <= n_; i++){
+                    res *= i;
+                }
+                return res;
+            }
+        }
+        else error("float fct err");
+}
 /*--------grammar_functions---------*/
-                   //
+Token_stream ts; 
+                       //
 double expression();                //
 double term();                      //
 double primary();                   //
@@ -143,29 +163,44 @@ double term(){                      //
 }                                   //
 /*-----------------------------------------------------------*/
 double primary(){                                            //
-    Token t = ts.get();                                      //
-    switch(t.kind){                                          //
+    Token t = ts.get(); 
+    double result;                                      //
+    switch(t.kind){                                         //
         case'(':                                             //
             {                                                //
                 double d = expression();                     //
                 t = ts.get();                                //
                 if(t.kind != ')'){error("')'expected");}     //
-                return d;                                    //
+                result = d; break;                                    //
             }                                                //
         case'D':                                             //
-            return t.value;  
-        case'A': 
-            return ans.value;                                //
+            result = t.value; break;
+        case'A':/*added*/
+            result = ans.value;break;   
+        case'+': 
+            {
+                double d = primary();
+                result = d; break;
+            } 
+        case'-': 
+            {
+                double d = primary();//good way to deal ++-- and -5!
+                result = -d; break;
+            }                          //
         default:                                             //
             error("primary expected");                       //
-    }                                                        //
+    } 
+    t = ts.get();
+    if(t.kind == '!') return factorial(result);  
+    else ts.putback(t);return result;                                                     //
 }                                                            //
 /*=============finish========================================*/
 
-int main(){
-    bool flag = true;/*added*/
+int main(){/*added*/
     double val = 0;
-    while(true){/*swift*/
+    bool flag = true;
+    while(true){
+                /*swift*/
     try{
             if(flag)cout<<">";
             Token t = ts.get();
