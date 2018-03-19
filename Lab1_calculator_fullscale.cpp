@@ -139,35 +139,36 @@ double expression(){                //
 /*----------------------------------*/
 double term(){                      //
     double left = primary();        //
-    Token t = ts.get(); 
-    double right;            //
+    Token t = ts.get();             //
     while(true){                    //
         switch(t.kind){             //
-            case'*':    
-                right = term();            //
-                left *= right;     //
+            case'*':                //
+                left *= primary();     //
                 t = ts.get();       //
                 break;              //
-            case'/':  
-                right = term(); 
-                if(right != 0){      //
+            case'/': 
+                double right;
+                right = primary();
+                if(right != 0){
                     left /= right;     //
                     t = ts.get();       //
-                    break;
-                }else{
+                    break;}
+                else{
                     t = ts.get();
-                    throw('N');
-                }
+                    throw('Z');}
             case'%': 
-                    right = term();
-                    if(right != 0 && right == int(right)){
-                        left = int(left) % int(right);
-                        t = ts.get();       //
-                        break;  
-                    }else{
-                        t = ts.get();
-                        throw('N');
-                    }  //
+                double right_;
+                right_ = primary();
+                if(right_ !=0 && right_ == int(right_) 
+                && left == int(left) )
+                    {
+                    left = int(left) % int(right_);
+                    t = ts.get();       //
+                    break;} 
+                else{
+                    t = ts.get();
+                    throw('S');
+                    }       //
             default:                //
                 ts.putback(t);      //
                 return left;        //
@@ -204,7 +205,7 @@ double primary(){                                            //
             }                          //
         default:    
             t = ts.get();                                         //
-            error("primary needed");                       //
+            error("primary");                       //
     } 
     t = ts.get();
     if(t.kind == '!') return factorial(result);  
