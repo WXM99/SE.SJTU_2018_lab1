@@ -1,45 +1,42 @@
-/*lab1_calculator_wxm_submit*/
-//https://github.com/WXM99/SE.SJTU_2018_labs
-#include <stdio.h>       //
-#include<iostream>       //
-#include<cmath>          //
-#include<vector>         //
-#include<iomanip>        //
-#include<string>         //
-#include<algorithm>      //
-using namespace std;     //
-/*-----------------------*/
+/*lab1_calculator;
+运算带有'+''—''*''/''%‘'!''ANS',并以英文分号结尾的表达式的一个IO计算器;
+lab完成过程: https://github.com/WXM99/SE.SJTU_2018_labs 
+魏小渺 516015910018*/
+#include<iostream>     
+using namespace std;     
 
 /**error_function*************/
 void error(string s){        //
-    throw runtime_error(s);  //
+    throw runtime_error(s);  // 原定可以显示错误原因，sample中没有，就在main()中简化了
 }                            //
 /*---------------------------*/
 
-/******Construction of Token*****/
-class Token{                    //
-public:                         //
+/**************Token*************/
+class Token{                    // 单词类，是表达式的基本元素
+public:                         // 包括 数字 符号 ANS 
     char kind;                  //
     double value;               //
-    Token(char ch)              //
+    Token(char ch)              // 符号子类
         :kind(ch), value(0){}   //
-    Token(char ch, double val)  //
+    Token(char ch, double val)  // 数字子类 包含数字的值
         :kind(ch),value(val){}  //
-}; Token ans('A',0);            //
-                                //
-/*=============finish===========*/
+};                              //
+/*==============================*/
 
-/*****************Construction of Token_stream **************************/
-class Token_stream{                                                     //
+Token ans('A',0);               // 全局变量ans 用来持续记录每次表达式的结果
+
+
+/************************Token_stream ***********************************/
+class Token_stream{                                                     /* 这个类用来读取表达式，是对cin做了一个出口改装*/
 public:                                                                 //
     Token_stream();                                                     //
-    Token get();                                                        //
-    void putback(Token t);                                              //
+    Token get();                                                        /* 读一个Token*/
+    void putback(Token t);                                              /* 放回一个Token*/
 private:                                                                //
-    bool full;                                                          // 
+    bool full;                                                          /* 缓存一个Token*/ 
     Token buffer;                                                       //
 };                                                                      //
-/*build-in function-----------------------------------------------------*/                
+/*build-in function-----------------------------------------------------*/               
 Token_stream::Token_stream()                                            //
     :full(false), buffer(0)                                             //
 {                                                                       //
@@ -47,7 +44,7 @@ Token_stream::Token_stream()                                            //
 /*----------putback(Token)----------------------------------------------*/      
 void Token_stream::putback(Token t)                                     //
 {                                                                       //
-    //if(full){error("putback() into a full buffer.");}                 //
+    if(full){error("putback() into a full buffer.");}                   //
     buffer = t;                                                         //
     full = true;                                                        //
 }                                                                       //                                                                     
@@ -63,42 +60,45 @@ Token Token_stream::get()                                               //
     switch(ch){                                                         //
         case';':                                                        //
         case'q':                                                        //
-        case'(':case')':                                                //
+        case'!':                                                        // 
+        case'(':case')':                                                // 
         case'+':case'-':                                                //
-        case'*':case'/':case'%':case'!':                                //                 
-            return Token(ch);                                           //
+        case'*':case'/':case'%':                                        //           
+            return Token(ch);                                           // 符号类型 返回char  
         case'.':                                                        //
         case'0':case'1':case'2':case'3':case'4':                        //
         case'5':case'6':case'7':case'8':case'9':                        //
-            {                                                           //
+            {                                                           // 数字类型，还得用cin来读
                 double val;                                             //
                 cin.putback(ch);//put the char back to cin's buffer     //
                 cin>>val;//cin can read the number including 'ch'       //
                 return Token('D',val);                                  //
             }                                                           //
-        case'A':{/*added*/                                              //
-                char a1; char a2;                                       //
+        case'A':{/*added*/                                              // ANS
+                char a1; char a2;                                       // A_ _不是ANS也报错
                 cin>>a1>>a2;                                            //
-                if(a1 == 'N'&& a2 == 'S')return ans;                    //
+                if(a1 == 'N'&& a2 == 'S')return ans;                    // 
                 else error("Bad token");                                //
             }                                                           //
         default:                                                        //    
             error("Bad token");                                         //
     }                                                                   //
 }                                                                       //
-/*==================finsish=============================================*/
+/*======================================================================*/
 
-/********************factorial******************/
+Token_stream ts;                                //全局变量ts，用来持续读取表达式
+
+/***************factorial()阶乘函数***************/
 int factorial(double n){                        //
-        int n_ = int(n);                        //
+        int n_ = int(n);                        // 整数判断
         if(n_ == n){                            //
             if(n_ == 0){                        //
                 return 1;                       //
-            }else if(n < 0){                    //
+            }else if(n < 0){                    // 符号判断
                 error("negative fct err");      //
             }else{                              //
                 int res = 1;                    //
-                for(int i = 1; i <= n_; i++){   //
+                for(int i = 1; i <= n_; i++){   // 阶乘
                     res *= i;                   //
                 }                               //
                 return res;                     //
@@ -108,164 +108,140 @@ int factorial(double n){                        //
             error("float fct err");             //
             }                                   //
 }                                               //
-/*=====================finish===================*/                                               
-
-
-/*--------grammar_functions---------*/
-Token_stream ts;                    //
-/*added*/                           //
-double expression();                //
-double term();                      //
-double primary();                   //
-/*----------------------------------*/
-double expression(){                //
-   double left = term();            //
-   Token t = ts.get();              //
-   while(true){                     //
-       switch(t.kind){              //
-            case'+':                //
-                left += term();     //
-                t = ts.get();       //
-                break;              //
-            case'-':                //
-                left -= term();     //
-                t = ts.get();       //
-                break;              //
-            default:                //
-                ts.putback(t);      //
-                return left;        //       
-        }                           //
-    }                               //
-}                                   //
-/*----------------------------------*/
-double term(){                      //
-    double left = primary();        //
-    Token t = ts.get();             //
-    while(true){                    //
-        switch(t.kind){              //
-            case'*':                  //
-                left *= primary();     //
-                t = ts.get();           //
-                break;                   //
-            case'/':                      //
-                double right;              //
-                right = primary();          //
-                if(right != 0){              //
-                    left /= right;            //
-                    t = ts.get();              //
-                    break;}                     //
-                else{                            //
-                    t = ts.get();                 //
-                    throw('0');}                   //
-            case'%':                                //
-                double right_;                       //
-                right_ = primary();                   //
-                if(right_ !=0 && right_ == int(right_) //
-                && left == int(left) )                //
-                    {                                //
-                    left = int(left) % int(right_); //
-                    t = ts.get();                  //
-                    break;}                       //
-                else{                            //
-                    t = ts.get();               //
-                    throw('.');                //
-                    }                         //
-            default:                         //
-                ts.putback(t);              //
-                return left;               //
-        }                                 //
-    }                                    //
-}                                       //
-/*-------------------------------------*/
-
-/***************Grammar functions******************8*/
-double primary(){                                   //
-    Token t = ts.get();                             //
-    double result;                                  //
-    switch(t.kind){                                 //
-        case'(':                                    //
-            {                                       //
+/*==============================================*/                                               
+                             
+/*--------------------词法函数-----------------------*/
+double expression();                                // primary()要用，先声明一下
+double primary(){                                   // 最高优先级primary()
+    Token t = ts.get();                             // 包含无符号数字 'D'
+    double result;                                  //    有符号数字  '+' '-'
+    switch(t.kind){                                 //    括号内部表达书 '('
+        case'(':                                    //    primary()的阶乘 '!'
+            {                                       // 括号的处理方式同Bjarne
                 double d = expression();            //
-                t = ts.get();                       //
-                if(t.kind != ')'){                  //
+                t = ts.get();                       //   
+                if(t.kind != ')'){                  // 改变了错误种类（参见main()中catch部分注释）
                     throw(')');                     //
                 }                                   //    
                 else result = d; break;             //
             }                                       //
-        case'D':                                    //
+        case'D':                                    // Digit 代表无符号数字类型
             result = t.value; break;                //
-        case'A':/*added*/                           //
-            result = ans.value;break;               //
-        case'+':                                    //
-            {                                       //
-                double d = primary();               //
-                result = d; break;                  //
-            }                                       //
-        case'-':                                    //
-            {                                       //
-                double d = primary();               //
-                result = -d; break;                 //
+        case'A':                                    // Answer 上次结果类型
+            result = ans.value; break;              //
+        case'+':                                    // sign 有符号数字类型
+            {                                       // 
+                double d = primary();               // 递归调用primary(), 最终读取无符号数字
+                result = d; break;                  // 递归调用(而非ts.get()读下一位)的优势是处理连续的符号
+            }                                       // 返回值d的等级仍然是primary
+        case'-':                                    // 
+            {                                       // 
+                double d = primary();               // 在这里递归调用primary()让阶乘优先级高于负号
+                result = -d; break;                 // 返回有符号的数字
             }                                       //
         default:                                    //
             t = ts.get();                           //
             error("primary needed");                //
     }                                               //
     t = ts.get();                                   //
-    if(t.kind == '!') return factorial(result);     //
-    else ts.putback(t);return result;               //                                    //
+    if(t.kind == '!') return factorial(result);     // digit后一位判断阶乘
+    else ts.putback(t);return result;               // 有则调用factorial()
+}                                                   // 无则吐回，返回原值 
+/*--------------------------------------------------*/
+double term(){                                      // 第二优先级term()
+    double left = primary();                        // 包括primary()之间的'*''/''%'运算
+    Token t = ts.get();                             // 
+    while(true){                                    //
+        switch(t.kind){                             //
+            case'*':                                //
+                left *= primary();                  //
+                t = ts.get();                       //
+                break;                              //
+            case'/':                                //
+                double right;                       // 
+                right = primary();                  // primary()仅传递值到right防止判断时再次读取
+                if(right != 0){                     // 用right判断
+                    left /= right;                  //
+                    t = ts.get();                   //
+                    break;}                         //
+                else{                               //
+                    t = ts.get();                   // 第二类报错（参见main()函数catch部分注释）
+                    throw('0');}                    //
+            case'%':                                //
+                double right_;                      // 变量right_同理
+                right_ = primary();                 //
+                if(right_ !=0                       // 取模的条件判断
+                && right_ == int(right_)            //
+                && left == int(left) ){             //
+                    left = int(left) % int(right_); //
+                    t = ts.get();                   //
+                    break;                          //
+                    }else{                          //
+                    t = ts.get();                   // 
+                    throw('.');                     // 第二类报错
+                    }                               //
+            default:                                //
+                ts.putback(t);                      //
+                return left;                        //
+        }                                           //
+    }                                               //
 }                                                   //
-/*=============finish===============================*/
+/*--------------------------------------------------*/
+double expression(){                                // 最低优先级 expression()
+   double left = term();                            //
+   Token t = ts.get();                              //
+   while(true){                                     //
+       switch(t.kind){                              //
+            case'+':                                //
+                left += term();                     //
+                t = ts.get();                       //
+                break;                              //
+            case'-':                                //
+                left -= term();                     //
+                t = ts.get();                       //
+                break;                              //
+            default:                                //
+                ts.putback(t);                      //
+                return left;                        //       
+        }                                           //
+    }                                               //
+}                                                   //
+/*==================================================*/
 
-int main(){/*added*/
+int main(){
     double val = 0;
-    bool flag = true;
-    while(true){//分号结尾，否则无法打印结果，或报错后无法开始新一轮循环
+    bool flag = true;                               //flag作为打印“>”的开关
+    while(true){
         try{ 
                 if(flag)cout<<"> ";
                 Token t = ts.get();
                 if(t.kind == 'q')break;
-                if(t.kind == ';'){//正确表达式读不到分号无法打印
+                if(t.kind == ';'){
                     cout<<"= "<<val<<endl;
                     cout<<" "<<endl;
-                    flag = true;/*added*/
-                    ans.value = val;/*added*/
+                    flag = true;                    //一个循环完成后重新开启flag，为下次输入打印“>”，下catch中同理
+                    ans.value = val;                //ANS的赋值
                 }else{
-                    flag = false;/*added*/
+                    flag = false;                   //开始读取表达式后flag关闭，避免输出结果打印“>”
                     ts.putback(t);
                     val = expression();
                 }
             }
-        catch(runtime_error& e){
+        catch(runtime_error& e){                    //第一类报错（输入不合法）需要清空输入流
             flag = true;
-            cerr<<"error: "<<e.what()<<endl;//catch的报错是即时的
+            cerr<<"error"<<endl;
             cout<<" "<<endl;
-            while(getchar() != ';' ){//但读不到分号无法退出循环，所以也需要分号       
-                cin.sync();//一旦有error，cin清空，避免多行重复报错
+            while(getchar() != ';' ){               //cin清空，避免多行重复报错   
+                cin.sync();
                 cin.clear();}
         }
         catch(char& e){
+            flag = true;                            //第二类报错（数字类型错误无需清空cin）
+            cerr<<"error"<<endl;
+            cerr<<" "<<endl;
+        }catch(...){                                //第三类报错（未知原因）
             flag = true;
-            switch(e){
-                case'0':{
-                    cerr<<"error: "<<e<<endl;
-                    cerr<<" "<<endl;
-                    break;}
-                case'.':{
-                    cerr<<"error: "<<e<<endl;
-                    cerr<<" "<<endl;
-                    break;}
-                case')':{
-                    cerr<<"error: "<<e<<endl;
-                    cerr<<" "<<endl;
-                    break;}
-                default:{
-                    cerr<<"error: ?"<<endl;
-                    cerr<<" "<<endl;
-                    }
-                }
-        }catch(...){
-            flag = true;
-            cerr<<"error: ?"<<endl;
+            cerr<<"error"<<endl;
             cout<<" "<<endl;
         }
     }
