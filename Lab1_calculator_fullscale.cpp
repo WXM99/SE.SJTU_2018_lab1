@@ -1,15 +1,10 @@
 /*lab1_calculator;
-运算带有'+''—''*''/''%‘'!''ANS',并以英文分号结尾的表达式的一个IO计算器;
+运算带有'+''—''*''/''%‘'!''ANS',并以英文分号结尾的表达式的一个console计算器;
 lab完成过程: https://github.com/WXM99/SE.SJTU_2018_labs 
 魏小渺 516015910018*/
-#include<iostream>     
+#include<iostream>
+#include"error_handing.h"  
 using namespace std;     
-
-/**error_function*************/
-void error(string s){        //
-    throw runtime_error(s);  // 原定可以显示错误原因，sample中没有，就在main()中简化了
-}                            //
-/*---------------------------*/
 
 /**************Token*************/
 class Token{                    // 单词类，是表达式的基本元素
@@ -58,8 +53,8 @@ Token Token_stream::get()                                               //
     char ch;                                                            //
     cin>>ch;                                                            //
     switch(ch){                                                         //
-        case';':                                                        //
-        case'q':                                                        //
+        case ';':                                                     //
+        case 'q':                                                      //
         case'!':                                                        // 
         case'(':case')':                                                // 
         case'+':case'-':                                                //
@@ -70,17 +65,17 @@ Token Token_stream::get()                                               //
         case'5':case'6':case'7':case'8':case'9':                        //
             {                                                           // 数字类型，还得用cin来读
                 double val;                                             //
-                cin.putback(ch);//put the char back to cin's buffer     //
-                cin>>val;//cin can read the number including 'ch'       //
+                cin.putback(ch);//判断后的放回                            //
+                cin>>val;//cin的读取数据的方式                             //
                 return Token('D',val);                                  //
             }                                                           //
-        case'A':{/*added*/                                              // ANS
+        case'A':{//ANS类型                                               // ANS
                 char a1; char a2;                                       // A_ _不是ANS也报错
                 cin>>a1>>a2;                                            //
                 if(a1 == 'N'&& a2 == 'S')return ans;                    // 
                 else error("Bad token");                                //
             }                                                           //
-        default:                                                        //    
+        default:                                                        //
             error("Bad token");                                         //
     }                                                                   //
 }                                                                       //
@@ -112,6 +107,7 @@ int factorial(double n){                        //
                              
 /*--------------------词法函数-----------------------*/
 double expression();                                // primary()要用，先声明一下
+
 double primary(){                                   // 最高优先级primary()
     Token t = ts.get();                             // 包含无符号数字 'D'
     double result;                                  //    有符号数字  '+' '-'
@@ -208,27 +204,35 @@ double expression(){                                // 最低优先级 expressio
 }                                                   //
 /*==================================================*/
 
-int main(){
+void calculate(){
     double val = 0;
-    bool flag = true;                               //flag作为打印“>”的开关
+    bool prompt = true;//prompt作为打印“>”的开关
     while(true){
-        try{ 
-                if(flag)cout<<"> ";
-                Token t = ts.get();
-                if(t.kind == 'q')break;
-                if(t.kind == ';'){
-                    cout<<"= "<<val<<endl;
-                    cout<<" "<<endl;
-                    flag = true;                    //一个循环完成后重新开启flag，为下次输入打印“>”，下catch中同理
-                    ans.value = val;                //ANS的赋值
-                }else{
-                    flag = false;                   //开始读取表达式后flag关闭，避免输出结果打印“>”
-                    ts.putback(t);
-                    val = expression();
-                }
+        try{//一次IO
+            if(prompt)cout<<"> ";                 
+            Token t = ts.get();
+            if(t.kind == ';'){// 分号先处理，解决exp；exp；的情况
+                t = ts.get(); // 即ts越过分号，开始处理下一个exp
             }
+            if(t.kind == 'q' ){
+                break;
+            }else{
+                ts.putback(t);
+            }
+
+            val = expression();
+            prompt = false; // 开始读取表达式后prompt关闭，避免输出结果打印“>”
+            cout<<"= "<<val<<endl;
+            cout<<" "<<endl;
+            ans.value = val;//ANS的赋值 
+            
+            char end = cin.get();
+            if(end == '\n') prompt = true;//输入达到结尾，打开开关，为下次打印prompt
+            else cin.putback(end);
+        }
+        
         catch(runtime_error& e){                    //第一类报错（输入不合法）需要清空输入流
-            flag = true;
+            prompt = true;
             cerr<<"error"<<endl;
             cout<<" "<<endl;
             while(getchar() != ';' ){               //cin清空，避免多行重复报错   
@@ -236,14 +240,18 @@ int main(){
                 cin.clear();}
         }
         catch(char& e){
-            flag = true;                            //第二类报错（数字类型错误无需清空cin）
+            prompt = true;                            //第二类报错（数字类型错误无需清空cin）
             cerr<<"error"<<endl;
             cerr<<" "<<endl;
         }catch(...){                                //第三类报错（未知原因）
-            flag = true;
+            prompt = true;
             cerr<<"error"<<endl;
             cout<<" "<<endl;
         }
     }
+}
+
+int main(){                            
+    calculate();
     return 0;
 }
