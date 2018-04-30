@@ -1,2 +1,2 @@
-# SE.SJTU_2018_labs
-Labs and projects. 
+# SE.SJTU_2018_lab1
+## Labs and projects. 
